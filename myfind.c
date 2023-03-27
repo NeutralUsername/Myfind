@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+
 
 typedef enum expressionType {
     PRINT,
@@ -15,30 +17,31 @@ typedef struct Expression {
     char *argument;
 } Expression;
 
+expressionType getExpressionType(char *expression);
+int validExpression (char *expression);
+
 int main(int argc, char *argv[])
 {
     int expressionCount = 0;
     Expression *expressions = NULL;
     int pathCount = 0;
-    char *path = "/";
     char **paths = malloc(sizeof(char*));
-    paths[0] = path;
+    paths[0] = "/";
     for (int i = 0; i < argc; i++)
     {
         if ( i == 0) {
             continue;
         } 
 
-        if (expressionCount == 0) {
-            if (argv[i][0] != '-') {
+        if (argv[i][0] != '-') {
+            if (expressionCount == 0) {
                 paths = realloc(paths, sizeof(char*) * pathCount+1);
                 paths[pathCount++] = argv[i];
-            } 
-        } else {
-            if (argv[i][0] != '-') {
+            } else {
                 printf("find: path must preceed expression: `%s'\n", argv[i]);
                 return 1;
             }
+            continue;
         }
 
         if (validExpression(argv[i]) == 0) {
