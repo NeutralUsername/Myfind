@@ -19,6 +19,7 @@ typedef struct Expression {
 } Expression;
 
 expressionType getExpressionType(char *expression);
+void printExpression(Expression *expression, int i);
 
 int main(int argc, char *argv[])
 {
@@ -56,7 +57,36 @@ int main(int argc, char *argv[])
         }
         expressionCount++;
     } 
+    for (int i = 0; i < expressionCount; i++) {
+        printExpression(&expressions[i], i);
+    }
+    for (int i = 0; i < pathCount; i++) {
+        printf("Path: %s\n", paths[i]);
+    }
     return 0;
+}
+
+void printExpression(Expression *expression, int i) {
+    printf("Expression %d: ", i);
+    switch (expression->type) {
+        case PRINT:
+            printf("PRINT\n");
+            break;
+        case LS:
+            printf("LS\n");
+            break;
+        case NAME:
+            printf("NAME: %s\n", expression->argument);
+            break;
+        case TYPE:  
+            printf("TYPE: %s\n", expression->argument);
+            break;
+        case USER:  
+            printf("USER: %s\n", expression->argument);
+            break;
+        default:
+            printf("Invalid expression\n");
+    }
 }
 
 expressionType getExpressionType(char *expression) {
