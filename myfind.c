@@ -28,12 +28,8 @@ int main(int argc, char *argv[])
     int pathCount = 0;
     char **paths = malloc(sizeof(char*));
     paths[0] = "/";
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
-        if ( i == 0) {
-            continue;
-        } 
-
         if (argv[i][0] != '-') {
             if (expressionCount == 0) {
                 paths = realloc(paths, sizeof(char*) * pathCount+1);
