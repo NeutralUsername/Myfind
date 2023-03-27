@@ -23,11 +23,11 @@ void printExpression(Expression *expression, int i);
 
 int main(int argc, char *argv[])
 {
-    int expressionCount = 0;
     Expression *expressions = NULL;
-    int pathCount = 1; //magic
+    int expressionCount = 0;
     char **paths = malloc(sizeof(char*));
     paths[0] = "/";
+        int pathCount = 1;
     for (int i = 0; i < argc; i++)
     {
         if ( i == 0) {
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
         if (argv[i][0] != '-') {
             if (expressionCount == 0) {
-                pathCount = 0; //magic
+                pathCount = 0; //setting to 0 because first path is overwritten
                 paths = realloc(paths, sizeof(char*) * pathCount+1);
                 paths[pathCount++] = argv[i];
             } else {
