@@ -3,22 +3,22 @@
 #include <stdlib.h>
 
 
-typedef enum expressionType {
+typedef enum ExpressionType {
     PRINT,
     LS,
     NAME,
     TYPE,
     USER,
     invalid
-} expressionType;
+} ExpressionType;
 
 
 typedef struct Expression {
-    expressionType type;
+    ExpressionType type;
     char *argument;
 } Expression;
 
-expressionType getExpressionType(char *expression);
+ExpressionType getExpressionType(char *expression);
 void printExpression(Expression *expression, int i);
 void processArgs(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount);
 
@@ -27,9 +27,13 @@ int main(int argc, char *argv[])
     int expressionCount = 0;
     Expression *expressions = NULL;
     int pathCount = 0;
-    char **paths = malloc(sizeof(char*));
-    paths[0] = "/";
+    char **paths = NULL;
     processArgs(argc, argv, &expressions, &expressionCount, &paths, &pathCount);
+    if (pathCount == 0) {
+        pathCount = 1;
+        paths = malloc(sizeof(char*));
+        paths[0] = "/";
+    } 
     for (int i = 0; i < expressionCount; i++) {
         printExpression(&expressions[i], i);
     }
@@ -53,7 +57,7 @@ void processArgs(int argc, char *argv[], Expression **expressions, int *expressi
             continue;
         }
 
-        expressionType type = getExpressionType(argv[i]);
+        ExpressionType type = getExpressionType(argv[i]);
         if (type == invalid) {
             printf("find: unknown predicate `%s'\n", argv[i]);
             exit(1);
@@ -65,9 +69,20 @@ void processArgs(int argc, char *argv[], Expression **expressions, int *expressi
         }
         (*expressionCount)++;
     } 
-    if (*pathCount == 0) {
-        *pathCount = 1;
-    } 
+}
+
+ExpressionType getExpressionType(char *expression) {
+    if (strcmp(expression, "-print") == 0)
+        return PRINT;
+    if (strcmp(expression, "-ls") == 0)
+        return LS;
+    if (strcmp(expression, "-name") == 0)
+        return NAME;
+    if (strcmp(expression, "-type") == 0)
+        return TYPE;
+    if (strcmp(expression, "-user") == 0)
+        return USER;
+    return invalid;
 }
 
 void printExpression(Expression *expression, int i) {
@@ -91,18 +106,4 @@ void printExpression(Expression *expression, int i) {
         default:
             printf("Invalid expression\n");
     }
-}
-
-expressionType getExpressionType(char *expression) {
-    if (strcmp(expression, "-print") == 0)
-        return PRINT;
-    if (strcmp(expression, "-ls") == 0)
-        return LS;
-    if (strcmp(expression, "-name") == 0)
-        return NAME;
-    if (strcmp(expression, "-type") == 0)
-        return TYPE;
-    if (strcmp(expression, "-user") == 0)
-        return USER;
-    return invalid;
 }
