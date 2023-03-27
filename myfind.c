@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 {
     int expressionCount = 0;
     Expression *expressions = NULL;
-    int pathCount = 0;
+    int pathCount = 1; //magic
     char **paths = malloc(sizeof(char*));
     paths[0] = "/";
     for (int i = 0; i < argc; i++)
@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 
         if (argv[i][0] != '-') {
             if (expressionCount == 0) {
+                pathCount = 0; //magic
                 paths = realloc(paths, sizeof(char*) * pathCount+1);
                 paths[pathCount++] = argv[i];
             } else {
