@@ -19,7 +19,6 @@ typedef struct Expression {
 } Expression;
 
 expressionType getExpressionType(char *expression);
-int validExpression (char *expression);
 
 int main(int argc, char *argv[])
 {
@@ -72,15 +71,4 @@ expressionType getExpressionType(char *expression) {
     if (strcmp(expression, "-user") == 0)
         return USER;
     return invalid;
-}
-
-int validExpression (char *expression) {
-    if (strcmp(expression, "-print") != 0)
-        if (strcmp(expression, "-ls") != 0)
-            if (strcmp(expression, "-name") != 0)
-                if (strcmp(expression, "-type") != 0)
-                    if (strcmp(expression, "-user") != 0){
-                        return 0;
-                    }
-    return 1;
 }
