@@ -9,6 +9,7 @@ typedef enum expressionType {
     NAME,
     TYPE,
     USER,
+    invalid
 } expressionType;
 
 
@@ -44,13 +45,14 @@ int main(int argc, char *argv[])
             continue;
         }
 
-        if (validExpression(argv[i]) == 0) {
+        expressionType type = getExpressionType(argv[i]);
+        if (type == invalid) {
             printf("find: unknown predicate `%s'\n", argv[i]);
             return 1;
         }
         expressions = realloc(expressions, sizeof(Expression) * expressionCount+1);
-        expressions[expressionCount].type = getExpressionType(argv[i]);
-        if (expressions[expressionCount].type == NAME || expressions[expressionCount].type == TYPE || expressions[expressionCount].type == USER) {
+        expressions[expressionCount].type = type;
+        if (type == NAME || type == TYPE || type == USER) {
             expressions[expressionCount].argument = argv[++i];
         }
         expressionCount++;
@@ -69,6 +71,7 @@ expressionType getExpressionType(char *expression) {
         return TYPE;
     if (strcmp(expression, "-user") == 0)
         return USER;
+    return invalid;
 }
 
 int validExpression (char *expression) {
