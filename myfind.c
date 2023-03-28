@@ -5,6 +5,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <time.h>
+
 
 typedef enum ExpressionType {
     PRINT,
@@ -75,32 +77,50 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
                     printf("%s\n", path);
                     break;
                 case LS:
-                    printf("%s\t", path);
-                    break;  
-                case NAME:
-                    if (strcmp(expressions[i].argument, path) == 0) {
-                        printf("%s\t", path);
+                    {
+                        struct stat fileStat;
+                        if (stat(path, &fileStat) < 0) {
+                            printf("find: cannot access `%s': No such file or directory\n", path);
+                            return;
+                        }
+                        printf("%ld\t", fileStat.st_ino);
+                        printf("%ld\t", fileStat.st_blocks);
+                        printf("%o\t", fileStat.st_mode);
+                        printf("%d\t", fileStat.st_nlink);
+                        printf("%d\t", fileStat.st_uid);
+                        printf("%d\t", fileStat.st_gid);
+                        printf("%ld\t", fileStat.st_size);
+                        printf("%s\t", ctime(&fileStat.st_mtime));
+                        printf("%s\n", path);
                     }
                     break;
+                case NAME:
+                    if (strcmp(expressions[i].argument, path) == 0) {
+                        printf("%s\n", path);
+                        break;
+                    } else {
+                        return;
+                    }
                 case TYPE:
                     if (strcmp(expressions[i].argument, "f") == 0) {
                         if (!isDir(path)) {
-                            printf("%s\t", path);
+                            printf("%s\n", path);
+                            break;
+                        } else {
+                            return;
                         }
                     } else if (strcmp(expressions[i].argument, "d") == 0) {
                         if (isDir(path)) {
-                            printf("%s\t", path);
+                            printf("%s\n", path);
+                            break;
+                        } else {
+                            return;
                         }
+                    } else {
+                        printf("find: invalid argument `%s' to `-type'\n", expressions[i].argument);
+                        exit(1);
                     }
-                    break;
                 case USER:
-                    if (strcmp(expressions[i].argument, "root") == 0) {
-                        struct stat pathStat;
-                        stat(path, &pathStat);
-                        if (pathStat.st_uid == 0) {
-                            printf("%s\t", path);
-                        }
-                    }
                     break;
                 default:
                     break;
