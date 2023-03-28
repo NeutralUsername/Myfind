@@ -47,27 +47,66 @@ int main(int argc, char *argv[])
 }
 
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount) {
-    struct dirent *entry;
-    DIR *dir = opendir(path);
-    if (dir == NULL) {
-        printf("find: cannot access `%s': No such file or directory\n", path);
-        return;
-    }
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
-            continue;
+    printf("%s\n", path);
+    if (isDir(path) ) {
+        DIR *dir = opendir(path);
+        if (dir == NULL) {
+            printf("find: cannot access `%s': No such file or directory\n", path);
+            return;
         }
-        char *newPath = malloc(strlen(path) + strlen(entry->d_name) + 2);
-        strcpy(newPath, path);
-        if (path[strlen(path)-1] != '/')
-            strcat(newPath, "/");
-        strcat(newPath, entry->d_name);
-        printf("%s\n", newPath);
-        if (isDir(newPath))
+        struct dirent *entry;
+        while ((entry = readdir(dir)) != NULL) {
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
+            char *newPath = malloc(strlen(path) + strlen(entry->d_name) + 2);
+            strcpy(newPath, path);
+            if (path[strlen(path)-1] != '/')
+                strcat(newPath, "/");
+            strcat(newPath, entry->d_name);
             iterateThroughDirectoryTree(newPath, expressions, expressionCount);
-        free(newPath);
+            free(newPath);
+        }
+        closedir(dir);
+    } else {
+        for (int i = 0; i < expressionCount; i++) {
+            switch (expressions[i].type) {
+                case PRINT:
+                    printf("%s\n", path);
+                    break;
+                case LS:
+                    printf("%s\t", path);
+                    break;  
+                case NAME:
+                    if (strcmp(expressions[i].argument, path) == 0) {
+                        printf("%s\t", path);
+                    }
+                    break;
+                case TYPE:
+                    if (strcmp(expressions[i].argument, "f") == 0) {
+                        if (!isDir(path)) {
+                            printf("%s\t", path);
+                        }
+                    } else if (strcmp(expressions[i].argument, "d") == 0) {
+                        if (isDir(path)) {
+                            printf("%s\t", path);
+                        }
+                    }
+                    break;
+                case USER:
+                    if (strcmp(expressions[i].argument, "root") == 0) {
+                        struct stat pathStat;
+                        stat(path, &pathStat);
+                        if (pathStat.st_uid == 0) {
+                            printf("%s\t", path);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
     }
-    closedir(dir);
 }
 
 int isDir(const char* name) {
