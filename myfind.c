@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 typedef enum ExpressionType {
     PRINT,
@@ -12,7 +15,6 @@ typedef enum ExpressionType {
     invalid
 } ExpressionType;
 
-
 typedef struct Expression {
     ExpressionType type;
     char *argument;
@@ -21,6 +23,9 @@ typedef struct Expression {
 ExpressionType getExpressionType(char *expression);
 void printExpression(Expression *expression, int i);
 void processArgs(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount);
+void printPathsAndExpressions(char **paths, int pathCount, Expression *expressions, int expressionCount);
+void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount);
+int isDir(const char* fileName);
 
 int main(int argc, char *argv[])
 {
@@ -34,40 +39,67 @@ int main(int argc, char *argv[])
         paths = malloc(sizeof(char*));
         paths[0] = "/";
     } 
-    for (int i = 0; i < expressionCount; i++) {
-        printExpression(&expressions[i], i);
-    }
+    printPathsAndExpressions(paths, pathCount, expressions, expressionCount);
     for (int i = 0; i < pathCount; i++) {
-        printf("Path: %s\n", paths[i]);
+        iterateThroughDirectoryTree(paths[i], expressions, expressionCount);
     }
     return 0;
 }
 
-void processArgs(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount) {
+void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount) {
+    struct dirent *entry;
+    DIR *dir = opendir(path);
+    if (dir == NULL) {
+        printf("find: cannot access `%s': No such file or directory\n", path);
+        return;
+    }
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        char *newPath = malloc(strlen(path) + strlen(entry->d_name) + 2);
+        strcpy(newPath, path);
+        if (path[strlen(path)-1] != '/')
+            strcat(newPath, "/");
+        strcat(newPath, entry->d_name);
+        printf("%s\n", newPath);
+        if (isDir(newPath))
+            iterateThroughDirectoryTree(newPath, expressions, expressionCount);
+        free(newPath);
+    }
+    closedir(dir);
+}
+
+int isDir(const char* name) {
+    struct stat path;
+    stat(name, &path);
+    return S_ISDIR(path.st_mode);
+}
+
+void processArgs(int argc, char *argv[], Expression **pExpressions, int *pExpressionCount, char ***pPaths, int *pPathCount) {
     for (int i = 1; i < argc; i++)
     {
         if (argv[i][0] != '-') {
-            if (*expressionCount == 0) {
-                *paths = realloc(*paths, sizeof(char*) * (*pathCount)+1);
-                (*paths)[(*pathCount)++] = argv[i];
+            if (*pExpressionCount == 0) {
+                *pPaths = realloc(*pPaths, sizeof(char*) * (*pPathCount)+1);
+                (*pPaths)[(*pPathCount)++] = argv[i];
             } else {
                 printf("find: path must preceed expression: `%s'\n", argv[i]);
                 exit(1);
             }
             continue;
         }
-
         ExpressionType type = getExpressionType(argv[i]);
         if (type == invalid) {
             printf("find: unknown predicate `%s'\n", argv[i]);
             exit(1);
         }
-        *expressions = realloc(*expressions, sizeof(Expression) * (*expressionCount)+1);
-        (*expressions)[*expressionCount].type = type;
+        *pExpressions = realloc(*pExpressions, sizeof(Expression) * (*pExpressionCount)+1);
+        (*pExpressions)[*pExpressionCount].type = type;
         if (type == NAME || type == TYPE || type == USER) {
-            (*expressions)[*expressionCount].argument = argv[++i];
+            (*pExpressions)[*pExpressionCount].argument = argv[++i];
         }
-        (*expressionCount)++;
+        (*pExpressionCount)++;
     } 
 }
 
@@ -105,5 +137,14 @@ void printExpression(Expression *expression, int i) {
             break;
         default:
             printf("Invalid expression\n");
+    }
+}
+
+void printPathsAndExpressions(char **paths, int pathCount, Expression *expressions, int expressionCount) {
+     for (int i = 0; i < expressionCount; i++) {
+        printExpression(&expressions[i], i);
+    }
+    for (int i = 0; i < pathCount; i++) {
+        printf("Path: %s\n", paths[i]);
     }
 }
