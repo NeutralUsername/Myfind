@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <time.h>
 #include <pwd.h>
+#include <fnmatch.h>
+#include <ctype.h>
+
 
 typedef enum ExpressionType {
     PRINT,
@@ -28,8 +31,7 @@ void processArgs(int argc, char *argv[], Expression **expressions, int *expressi
 void printPathsAndExpressions(char **paths, int pathCount, Expression *expressions, int expressionCount);
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount);
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     int expressionCount = 0;
     Expression *expressions = NULL;
     int pathCount = 0;
@@ -38,9 +40,10 @@ int main(int argc, char *argv[])
     if (pathCount == 0) {
         pathCount = 1;
         paths = malloc(sizeof(char*));
-        paths[0] = "/";
+        char *currentWorkingDirectory = malloc(1024);
+        getcwd(currentWorkingDirectory, 1024);
+        paths[0] = currentWorkingDirectory;
     } 
-    printPathsAndExpressions(paths, pathCount, expressions, expressionCount);
     for (int i = 0; i < pathCount; i++) {
         iterateThroughDirectoryTree(paths[i], expressions, expressionCount);
     }
@@ -48,7 +51,6 @@ int main(int argc, char *argv[])
 }
 
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount) {
-    printf("%s\n", path);
     struct stat fileStat;
     if (stat(path, &fileStat) < 0) {
         printf("find: '%s': No such file or directory\n", path); 
@@ -73,108 +75,107 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
             free(newPath);
         }
         closedir(dir);
-    } else {
-        for (int i = 0; i < expressionCount; i++) {
-            switch (expressions[i].type) {
-                case PRINT:
+    } 
+     for (int i = 0; i < expressionCount; i++) {
+        switch (expressions[i].type) {
+            case PRINT:
+                printf("%s\n", path);
+                break;
+            case LS:
+                {
+                    printf("%ld\t", fileStat.st_ino);
+                    printf("%ld\t", fileStat.st_blocks);
+                    printf("%o\t", fileStat.st_mode);
+                    printf("%ld\t", fileStat.st_nlink);
+                    printf("%d\t", fileStat.st_uid);
+                    printf("%d\t", fileStat.st_gid);
+                    printf("%ld\t", fileStat.st_size);
+                    printf("%s\t", ctime(&fileStat.st_mtime));
+                    printf("%s\n", path);
+                }
+                break;
+            case NAME:
+                if(fnmatch(expressions[i].argument, path, 0) == 0) {
                     printf("%s\n", path);
                     break;
-                case LS:
-                    {
-                        printf("%ld\t", fileStat.st_ino);
-                        printf("%ld\t", fileStat.st_blocks);
-                        printf("%o\t", fileStat.st_mode);
-                        printf("%ld\t", fileStat.st_nlink);
-                        printf("%d\t", fileStat.st_uid);
-                        printf("%d\t", fileStat.st_gid);
-                        printf("%ld\t", fileStat.st_size);
-                        printf("%s\t", ctime(&fileStat.st_mtime));
-                        printf("%s\n", path);
-                    }
-                    break;
-                case NAME:
-                    if (strcmp(expressions[i].argument, path) == 0) {
+                } else {
+                    return;
+                }
+            case TYPE:
+                if (strcmp(expressions[i].argument, "f") == 0) {
+                    if (S_ISREG(fileStat.st_mode)) {
                         printf("%s\n", path);
                         break;
                     } else {
                         return;
                     }
-                case TYPE:
-                    if (strcmp(expressions[i].argument, "f") == 0) {
-                        if (S_ISREG(fileStat.st_mode)) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
-                    } else if (strcmp(expressions[i].argument, "d") == 0) {
-                        if (S_ISDIR(fileStat.st_mode)) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
-                    } else if (strcmp(expressions[i].argument, "l") == 0) {
-                        if (S_ISLNK(fileStat.st_mode)) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
-                    } else if(strcmp(expressions[i].argument, "c") == 0) {
-                        if (S_ISCHR(fileStat.st_mode)) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
-                    } else if (strcmp(expressions[i].argument, "b") == 0) {
-                        if (S_ISBLK(fileStat.st_mode)) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
-                    } else if (strcmp(expressions[i].argument, "p") == 0) {
-                        if (S_ISFIFO(fileStat.st_mode)) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
-                    } else if (strcmp(expressions[i].argument, "s") == 0) {
-                        if (S_ISSOCK(fileStat.st_mode)) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
+                } else if (strcmp(expressions[i].argument, "d") == 0) {
+                    if (S_ISDIR(fileStat.st_mode)) {
+                        printf("%s\n", path);
+                        break;
                     } else {
-                        printf("find: unknown argument `%s' to `-type'\n", expressions[i].argument);
+                        return;
+                    }
+                } else if (strcmp(expressions[i].argument, "l") == 0) {
+                    if (S_ISLNK(fileStat.st_mode)) {
+                        printf("%s\n", path);
+                        break;
+                    } else {
+                        return;
+                    }
+                } else if(strcmp(expressions[i].argument, "c") == 0) {
+                    if (S_ISCHR(fileStat.st_mode)) {
+                        printf("%s\n", path);
+                        break;
+                    } else {
+                        return;
+                    }
+                } else if (strcmp(expressions[i].argument, "b") == 0) {
+                    if (S_ISBLK(fileStat.st_mode)) {
+                        printf("%s\n", path);
+                        break;
+                    } else {
+                        return;
+                    }
+                } else if (strcmp(expressions[i].argument, "p") == 0) {
+                    if (S_ISFIFO(fileStat.st_mode)) {
+                        printf("%s\n", path);
+                        break;
+                    } else {
+                        return;
+                    }
+                } else if (strcmp(expressions[i].argument, "s") == 0) {
+                    if (S_ISSOCK(fileStat.st_mode)) {
+                        printf("%s\n", path);
+                        break;
+                    } else {
+                        return;
+                    }
+                } else {
+                    printf("find: Unknown argument to -type: %s\n", expressions[i].argument);
+                    exit(1);
+                }
+            case USER:
+                {
+                    char *userNameOrId = expressions[i].argument;
+                    struct passwd *user = getpwnam(userNameOrId);
+                    if (user == NULL && isdigit(userNameOrId[0])) {
+                        user = getpwuid(atoi(userNameOrId));
+                    }
+                    if (user == NULL) {
+                        printf("find: '%s' is not the name of a known user\n", userNameOrId);
                         exit(1);
                     }
-                case USER:
-                    {
-                        char *userNameOrId = expressions[i].argument;
-                        struct passwd *pwd = getpwnam(userNameOrId);
-                        if (pwd == NULL) {
-                            pwd = getpwuid(atoi(userNameOrId));
-                            if (pwd == NULL) {
-                                printf("find: unknown user `%s'\n", userNameOrId);
-                                exit(1);
-                            }
-                        }
-                        if (pwd->pw_uid == fileStat.st_uid) {
-                            printf("%s\n", path);
-                            break;
-                        } else {
-                            return;
-                        }
+                    if (user->pw_uid == fileStat.st_uid) {
+                        printf("%s\n", path);
+                        break;
+                    } else {
+                        return;
                     }
-                    break;
-                default:
-                    break;
-            }
+                }
+                break;
+            default:
+                break;
         }
     }
 }
