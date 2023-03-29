@@ -26,9 +26,7 @@ typedef struct Expression {
 } Expression;
 
 ExpressionType getExpressionType(char *expression);
-void printExpression(Expression *expression, int i);
 void processArgs(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount);
-void printPathsAndExpressions(char **paths, int pathCount, Expression *expressions, int expressionCount);
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount);
 
 int main(int argc, char *argv[]) {
@@ -76,7 +74,7 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
         }
         closedir(dir);
     } 
-     for (int i = 0; i < expressionCount; i++) {
+    for (int i = 0; i < expressionCount; i++) {
         switch (expressions[i].type) {
             case PRINT:
                 printf("%s\n", path);
@@ -219,36 +217,4 @@ ExpressionType getExpressionType(char *expression) {
     if (strcmp(expression, "-user") == 0)
         return USER;
     return invalid;
-}
-
-void printExpression(Expression *expression, int i) {
-    printf("Expression %d: ", i);
-    switch (expression->type) {
-        case PRINT:
-            printf("PRINT\n");
-            break;
-        case LS:
-            printf("LS\n");
-            break;
-        case NAME:
-            printf("NAME: %s\n", expression->argument);
-            break;
-        case TYPE:  
-            printf("TYPE: %s\n", expression->argument);
-            break;
-        case USER:  
-            printf("USER: %s\n", expression->argument);
-            break;
-        default:
-            printf("Invalid expression\n");
-    }
-}
-
-void printPathsAndExpressions(char **paths, int pathCount, Expression *expressions, int expressionCount) {
-     for (int i = 0; i < expressionCount; i++) {
-        printExpression(&expressions[i], i);
-    }
-    for (int i = 0; i < pathCount; i++) {
-        printf("Path: %s\n", paths[i]);
-    }
 }
