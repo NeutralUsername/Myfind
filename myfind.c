@@ -128,7 +128,7 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
         }
     }
 }
-
+ 
 int isDir(const char* name) {
     struct stat path;
     stat(name, &path);
