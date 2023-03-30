@@ -42,9 +42,15 @@ int main(int argc, char *argv[]) {
         getcwd(currentWorkingDirectory, 1024);
         paths[0] = currentWorkingDirectory;
     } 
+    if (expressionCount == 0) {
+        expressionCount = 1;
+        expressions = malloc(sizeof(Expression));
+        expressions[0].type = PRINT;
+        expressions[0].argument = NULL;
+    }
     for (int i = 0; i < pathCount; i++) {
         struct stat fileStat;
-        if (stat(paths[i], &fileStat) < 0) { //if the (initial) path does not exist
+        if (stat(paths[i], &fileStat) < 0) { //if the provided path does not exist
             printf("find: '%s': No such file or directory\n", paths[i]); 
             continue;
         }
