@@ -26,15 +26,16 @@ typedef struct Expression {
 } Expression;
 
 ExpressionType getExpressionType(char *expression);
-void processArgs(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount);
+void commandLineParsingAndValidation(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount);
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat);
+void applyTestsAndActions(Expression *expressions, int expressionCount, char *path, struct stat fileStat);
 
 int main(int argc, char *argv[]) {
     int expressionCount = 0;
     Expression *expressions = NULL;
     int pathCount = 0;
     char **paths = NULL;
-    processArgs(argc, argv, &expressions, &expressionCount, &paths, &pathCount);
+    commandLineParsingAndValidation(argc, argv, &expressions, &expressionCount, &paths, &pathCount);
     if (pathCount == 0) {
         pathCount = 1;
         paths = malloc(sizeof(char*));
@@ -42,21 +43,54 @@ int main(int argc, char *argv[]) {
         getcwd(currentWorkingDirectory, 1024);
         paths[0] = currentWorkingDirectory;
     } 
-    if (expressionCount == 0) {
-        expressionCount = 1;
-        expressions = malloc(sizeof(Expression));
-        expressions[0].type = PRINT;
-        expressions[0].argument = NULL;
+    int printOrLsUsed = 0;
+    for (int i = 0; i < expressionCount; i++) {
+        if (expressions[i].type == PRINT || expressions[i].type == LS) {
+            printOrLsUsed = 1;
+            break;
+        }
+    }
+    if (!printOrLsUsed) {
+        expressionCount = expressionCount + 1;
+        expressions = realloc(expressions, sizeof(Expression) * expressionCount);
+        expressions[expressionCount-1].type = PRINT;
+        expressions[expressionCount-1].argument = NULL;
     }
     for (int i = 0; i < pathCount; i++) {
         struct stat fileStat;
-        if (stat(paths[i], &fileStat) < 0) { //if the provided path does not exist
+        if (stat(paths[i], &fileStat) < 0) { //if the provided path does not exist (or cannot be accessed)
             printf("find: '%s': No such file or directory\n", paths[i]); 
             continue;
         }
         iterateThroughDirectoryTree(paths[i], expressions, expressionCount, fileStat);
     }
     return 0;
+}
+
+void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpressions, int *pExpressionCount, char ***pPaths, int *pPathCount) {
+    for (int i = 1; i < argc; i++) {
+        if (argv[i][0] != '-') {
+            if (*pExpressionCount == 0) {
+                *pPaths = realloc(*pPaths, sizeof(char*) * (*pPathCount)+1);
+                (*pPaths)[(*pPathCount)++] = argv[i];
+            } else {
+                printf("find: path must preceed expression: `%s'\n", argv[i]);
+                exit(1);
+            }
+            continue;
+        }
+        ExpressionType type = getExpressionType(argv[i]);
+        if (type == invalid) {
+            printf("find: unknown predicate `%s'\n", argv[i]);
+            exit(1);
+        }
+        *pExpressions = realloc(*pExpressions, sizeof(Expression) * (*pExpressionCount)+1);
+        (*pExpressions)[*pExpressionCount].type = type;
+        if (type == NAME || type == TYPE || type == USER) {
+            (*pExpressions)[*pExpressionCount].argument = argv[++i];
+        }
+        (*pExpressionCount)++;
+    } 
 }
 
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat) {
@@ -82,27 +116,28 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
         }
         closedir(dir);
     } 
+    applyTestsAndActions(expressions, expressionCount, path, fileStat);
+}
+
+void applyTestsAndActions(Expression *expressions, int expressionCount, char *path, struct stat fileStat) {
     for (int i = 0; i < expressionCount; i++) {
         switch (expressions[i].type) {
             case PRINT:
                 printf("%s\n", path);
                 break;
             case LS:
-                {
-                    printf("%ld\t", fileStat.st_ino);
-                    printf("%ld\t", fileStat.st_blocks);
-                    printf("%o\t", fileStat.st_mode);
-                    printf("%ld\t", fileStat.st_nlink);
-                    printf("%d\t", fileStat.st_uid);
-                    printf("%d\t", fileStat.st_gid);
-                    printf("%ld\t", fileStat.st_size);
-                    printf("%s\t", ctime(&fileStat.st_mtime));
-                    printf("%s\n", path);
-                }
+                printf("%ld\t", fileStat.st_ino);
+                printf("%ld\t", fileStat.st_blocks);
+                printf("%o\t", fileStat.st_mode);
+                printf("%ld\t", fileStat.st_nlink);
+                printf("%d\t", fileStat.st_uid);
+                printf("%d\t", fileStat.st_gid);
+                printf("%ld\t", fileStat.st_size);
+                printf("%s\t", ctime(&fileStat.st_mtime));
+                printf("%s\n", path);
                 break;
             case NAME:
                 if(fnmatch(expressions[i].argument, path, 0) == 0) {
-                    printf("%s\n", path);
                     break;
                 } else {
                     return;
@@ -110,49 +145,42 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
             case TYPE:
                 if (strcmp(expressions[i].argument, "f") == 0) {
                     if (S_ISREG(fileStat.st_mode)) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
                     }
                 } else if (strcmp(expressions[i].argument, "d") == 0) {
                     if (S_ISDIR(fileStat.st_mode)) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
                     }
                 } else if (strcmp(expressions[i].argument, "l") == 0) {
                     if (S_ISLNK(fileStat.st_mode)) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
                     }
                 } else if(strcmp(expressions[i].argument, "c") == 0) {
                     if (S_ISCHR(fileStat.st_mode)) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
                     }
                 } else if (strcmp(expressions[i].argument, "b") == 0) {
                     if (S_ISBLK(fileStat.st_mode)) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
                     }
                 } else if (strcmp(expressions[i].argument, "p") == 0) {
                     if (S_ISFIFO(fileStat.st_mode)) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
                     }
                 } else if (strcmp(expressions[i].argument, "s") == 0) {
                     if (S_ISSOCK(fileStat.st_mode)) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
@@ -161,8 +189,7 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
                     printf("find: Unknown argument to -type: %s\n", expressions[i].argument);
                     exit(1);
                 }
-            case USER:
-                {
+            case USER: {
                     char *userNameOrId = expressions[i].argument;
                     struct passwd *user = getpwnam(userNameOrId);
                     if (user == NULL && isdigit(userNameOrId[0])) {
@@ -173,7 +200,6 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
                         exit(1);
                     }
                     if (user->pw_uid == fileStat.st_uid) {
-                        printf("%s\n", path);
                         break;
                     } else {
                         return;
@@ -184,33 +210,6 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
                 break;
         }
     }
-}
-
-void processArgs(int argc, char *argv[], Expression **pExpressions, int *pExpressionCount, char ***pPaths, int *pPathCount) {
-    for (int i = 1; i < argc; i++)
-    {
-        if (argv[i][0] != '-') {
-            if (*pExpressionCount == 0) {
-                *pPaths = realloc(*pPaths, sizeof(char*) * (*pPathCount)+1);
-                (*pPaths)[(*pPathCount)++] = argv[i];
-            } else {
-                printf("find: path must preceed expression: `%s'\n", argv[i]);
-                exit(1);
-            }
-            continue;
-        }
-        ExpressionType type = getExpressionType(argv[i]);
-        if (type == invalid) {
-            printf("find: unknown predicate `%s'\n", argv[i]);
-            exit(1);
-        }
-        *pExpressions = realloc(*pExpressions, sizeof(Expression) * (*pExpressionCount)+1);
-        (*pExpressions)[*pExpressionCount].type = type;
-        if (type == NAME || type == TYPE || type == USER) {
-            (*pExpressions)[*pExpressionCount].argument = argv[++i];
-        }
-        (*pExpressionCount)++;
-    } 
 }
 
 ExpressionType getExpressionType(char *expression) {
