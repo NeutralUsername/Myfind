@@ -324,6 +324,14 @@ void* testCommandLineParsingAndValidation(void *voidArgs) {
                 exit(1);
             }
         }
+        if (expressions[i].argument == NULL && properlyTypedArgs->pExpectedExpressions[i].argument != NULL) {
+            printf("testCommandLineParsingAndValidation: expression argument is NULL, expected %s ... in test %d\n", properlyTypedArgs->pExpectedExpressions[i].argument, properlyTypedArgs->testId);
+            exit(1);
+        }
+        if (expressions[i].argument != NULL && properlyTypedArgs->pExpectedExpressions[i].argument == NULL) {
+            printf("testCommandLineParsingAndValidation: expression argument is %s, expected NULL ... in test %d\n", expressions[i].argument, properlyTypedArgs->testId);
+            exit(1);
+        } 
     }
     if (pathCount != properlyTypedArgs->expectedPathCount) {
         printf("testCommandLineParsingAndValidation: pathCount is %d, expected %d ... in test %d\n", pathCount, properlyTypedArgs->expectedPathCount, properlyTypedArgs->testId);

@@ -62,6 +62,18 @@ void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpre
                 printf("find: missing argument to `%s'\n", argv[i]);
                 exit(1);
             }
+            if (type == TYPE) {
+                if (!isValidType(argv[i+1])) {
+                    printf("find: invalid argument `%s' to `-type'\n", argv[i+1]);
+                    exit(1);
+                }
+            }
+            if (type == USER) {
+                if (!isValidUser(argv[i+1])) {
+                    printf("find: '%s' is not the name of a known user\n", argv[i+1]);
+                    exit(1);
+                }
+            }
             (*pExpressions)[*pExpressionCount].argument = argv[i+1];
             i++;
         } else {
@@ -108,7 +120,7 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
                 strcat(newPath, "/");
             strcat(newPath, entry->d_name);
             struct stat newFileStat;
-            if (stat(newPath, &newFileStat) == 0) // if the file can be accessed
+            if (stat(newPath, &newFileStat) == 0) 
                 iterateThroughDirectoryTree(newPath, expressions, expressionCount, newFileStat);
             free(newPath);
         }
@@ -148,72 +160,76 @@ void applyTestsAndActions(Expression *expressions, int expressionCount, char *pa
                 break;
             case TYPE:
                 if (strcmp(expressions[i].argument, "f") == 0) {
-                    if (S_ISREG(fileStat.st_mode)) {
-                        break;
-                    } else {
+                    if (!S_ISREG(fileStat.st_mode)) {
                         return;
-                    }
+                    } 
                 } else if (strcmp(expressions[i].argument, "d") == 0) {
-                    if (S_ISDIR(fileStat.st_mode)) {
-                        break;
-                    } else {
+                    if (!S_ISDIR(fileStat.st_mode)) {
                         return;
-                    }
+                    } 
                 } else if (strcmp(expressions[i].argument, "l") == 0) {
-                    if (S_ISLNK(fileStat.st_mode)) {
-                        break;
-                    } else {
+                    if (!S_ISLNK(fileStat.st_mode)) {
                         return;
-                    }
+                    } 
                 } else if(strcmp(expressions[i].argument, "c") == 0) {
-                    if (S_ISCHR(fileStat.st_mode)) {
-                        break;
-                    } else {
+                    if (!S_ISCHR(fileStat.st_mode)) {
                         return;
-                    }
+                    } 
                 } else if (strcmp(expressions[i].argument, "b") == 0) {
-                    if (S_ISBLK(fileStat.st_mode)) {
-                        break;
-                    } else {
+                    if (!S_ISBLK(fileStat.st_mode)) {
                         return;
-                    }
+                    } 
                 } else if (strcmp(expressions[i].argument, "p") == 0) {
-                    if (S_ISFIFO(fileStat.st_mode)) {
-                        break;
-                    } else {
+                    if (!S_ISFIFO(fileStat.st_mode)) {
                         return;
-                    }
+                    } 
                 } else if (strcmp(expressions[i].argument, "s") == 0) {
-                    if (S_ISSOCK(fileStat.st_mode)) {
-                        break;
-                    } else {
+                    if (!S_ISSOCK(fileStat.st_mode)) {
                         return;
-                    }
-                } else {
-                    printf("find: Unknown argument to -type: %s\n", expressions[i].argument);
-                    exit(1);
-                }
-            case USER: {
-                    char *userNameOrId = expressions[i].argument;
-                    struct passwd *user = getpwnam(userNameOrId);
-                    if (user == NULL && isdigit(userNameOrId[0])) {
-                        user = getpwuid(atoi(userNameOrId));
-                    }
-                    if (user == NULL) {
-                        printf("find: '%s' is not the name of a known user\n", userNameOrId);
-                        exit(1);
-                    }
-                    if (user->pw_uid == fileStat.st_uid) {
-                        break;
-                    } else {
-                        return;
-                    }
+                    } 
                 }
                 break;
-            default:
+            case USER: {
+                char *userNameOrId = expressions[i].argument;
+                struct passwd *user = getpwnam(userNameOrId);
+                if (user == NULL && isdigit(userNameOrId[0])) {
+                    user = getpwuid(atoi(userNameOrId));
+                }
+                if (user->pw_uid != fileStat.st_uid) {
+                    return;
+                }
+            }
+            break;
+            case invalid:
                 break;
         }
     }
+}
+
+int isValidUser(char *user) {
+    struct passwd *userStruct = getpwnam(user);
+    if (userStruct == NULL && isdigit(user[0])) {
+        userStruct = getpwuid(atoi(user));
+    }
+    return userStruct != NULL;
+}
+
+int isValidType(char *type) {
+    if (strcmp(type, "f") == 0)
+        return 1;
+    if (strcmp(type, "d") == 0)
+        return 1;
+    if (strcmp(type, "l") == 0)
+        return 1;
+    if (strcmp(type, "c") == 0)
+        return 1;
+    if (strcmp(type, "b") == 0)
+        return 1;
+    if (strcmp(type, "p") == 0)
+        return 1;
+    if (strcmp(type, "s") == 0)
+        return 1;
+    return 0;
 }
 
 ExpressionType getExpressionType(char *expression) {
