@@ -12,38 +12,43 @@
 #include <pwd.h>
 #include <ctype.h>
 
+
+
 int main(int argc, char *argv[]) {
     callCommandLineParsingAndValidationTestCases();
-    int expressionCount = 0;
-    Expression *expressions = NULL;
-    int pathCount = 0;
-    char **paths = NULL;
-    commandLineParsingAndValidation(argc, argv, &expressions, &expressionCount, &paths, &pathCount);
-    for (int i = 0; i < pathCount; i++) {
+    ProcessedArguments processedArgs = commandLineParsingAndValidation(argc, argv);
+    for (int i = 0; i < processedArgs.pathCount; i++) {
         struct stat fileStat;
-        if (stat(paths[i], &fileStat) < 0) { //if the provided path does not exist (or cannot be accessed)
-            printf("find: '%s': No such file or directory\n", paths[i]); 
+        if (stat(processedArgs.paths[i], &fileStat) < 0) { //if the provided path does not exist (or cannot be accessed)
+            printf("find: '%s': No such file or directory\n", processedArgs.paths[i]); 
             continue;
         }
-        iterateThroughDirectoryTree(paths[i], expressions, expressionCount, fileStat);
+        iterateThroughDirectoryTree(processedArgs.paths[i], processedArgs.expressions, processedArgs.expressionCount, fileStat);
     }
-    free(expressions);
-    for (int i = 0; i < pathCount; i++) {
-        free(paths[i]);
+
+    free(processedArgs.expressions);
+    for (int i = 0; i < processedArgs.pathCount; i++) {
+        free(processedArgs.paths[i]);
     }
-    free(paths);
+    free(processedArgs.paths);
     return 0;
 }
 
 
-void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpressions, int *pExpressionCount, char ***pPaths, int *pPathCount) {
+ProcessedArguments commandLineParsingAndValidation(int argc, char *argv[]) {
+    ProcessedArguments processedArgs = {
+        .expressionCount = 0,
+        .expressions = NULL,
+        .pathCount = 0,
+        .paths = NULL
+    };
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] != '-') {
-            if (*pExpressionCount == 0) {
-                *pPaths = realloc(*pPaths, sizeof(char*) * ((*pPathCount)+1));
+            if (processedArgs.expressionCount == 0) {
+                processedArgs.paths = realloc(processedArgs.paths, sizeof(char*) * ((processedArgs.pathCount)+1));
                 char *path = malloc(sizeof(char) * (strlen(argv[i])+1));
                 strcpy(path, argv[i]);
-                (*pPaths)[(*pPathCount)++] = path;
+                (processedArgs.paths)[(processedArgs.pathCount)++] = path;
             } else {
                 printf("find: path must preceed expression: `%s'\n", argv[i]);
                 exit(1);
@@ -55,8 +60,8 @@ void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpre
             printf("find: unknown predicate `%s'\n", argv[i]);
             exit(1);
         }
-        *pExpressions = realloc(*pExpressions, sizeof(Expression) * ((*pExpressionCount)+1));
-        (*pExpressions)[*pExpressionCount].type = type;
+        processedArgs.expressions = realloc(processedArgs.expressions, sizeof(Expression) * ((processedArgs.expressionCount)+1));
+        (processedArgs.expressions)[processedArgs.expressionCount].type = type;
         if (type == NAME || type == TYPE || type == USER) {
             if (i+1 >= argc) {
                 printf("find: missing argument to `%s'\n", argv[i]);
@@ -74,33 +79,34 @@ void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpre
                     exit(1);
                 }
             }
-            (*pExpressions)[*pExpressionCount].argument = argv[i+1];
+            (processedArgs.expressions)[processedArgs.expressionCount].argument = argv[i+1];
             i++;
         } else {
-            (*pExpressions)[*pExpressionCount].argument = "";
+            (processedArgs.expressions)[processedArgs.expressionCount].argument = "";
         }
-        (*pExpressionCount)++;
+        (processedArgs.expressionCount)++;
     } 
-    if (*pPathCount == 0) {
-        *pPathCount = 1;
-        *pPaths = malloc(sizeof(char*));
-        (*pPaths)[0] = malloc(sizeof(char) * 2);
-        (*pPaths)[0][0] = '.';
-        (*pPaths)[0][1] = '\0';
+    if (processedArgs.pathCount == 0) {
+        processedArgs.pathCount = 1;
+        processedArgs.paths = malloc(sizeof(char*));
+        (processedArgs.paths )[0] = malloc(sizeof(char) * 2);
+        (processedArgs.paths)[0][0] = '.';
+        (processedArgs.paths)[0][1] = '\0';
     } 
     int printOrLsUsed = 0;
-    for (int i = 0; i < (*pExpressionCount); i++) {
-        if ((*pExpressions)[i].type == PRINT || (*pExpressions)[i].type == LS) {
+    for (int i = 0; i < (processedArgs.expressionCount); i++) {
+        if ((processedArgs.expressions)[i].type == PRINT || (processedArgs.expressions)[i].type == LS) {
             printOrLsUsed = 1;
             break;
         }
     }
     if (!printOrLsUsed) {
-        *pExpressionCount = (*pExpressionCount) + 1;
-        *pExpressions = realloc(*pExpressions, sizeof(Expression) * (*pExpressionCount));
-        (*pExpressions)[(*pExpressionCount)-1].type = PRINT;
-        (*pExpressions)[(*pExpressionCount)-1].argument = "";
+        processedArgs.expressionCount = (processedArgs.expressionCount) + 1;
+        processedArgs.expressions = realloc(processedArgs.expressions, sizeof(Expression) * (processedArgs.expressionCount));
+        (processedArgs.expressions)[(processedArgs.expressionCount)-1].type = PRINT;
+        (processedArgs.expressions)[(processedArgs.expressionCount)-1].argument = "";
     }
+    return processedArgs;
 }
 
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat) {
