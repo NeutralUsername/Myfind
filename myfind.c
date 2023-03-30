@@ -27,7 +27,7 @@ typedef struct Expression {
 
 ExpressionType getExpressionType(char *expression);
 void processArgs(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount);
-void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount);
+void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat);
 
 int main(int argc, char *argv[]) {
     int expressionCount = 0;
@@ -43,17 +43,17 @@ int main(int argc, char *argv[]) {
         paths[0] = currentWorkingDirectory;
     } 
     for (int i = 0; i < pathCount; i++) {
-        iterateThroughDirectoryTree(paths[i], expressions, expressionCount);
+        struct stat fileStat;
+        if (stat(paths[i], &fileStat) < 0) { //if the (initial) path does not exist
+            printf("find: '%s': No such file or directory\n", paths[i]); 
+            continue;
+        }
+        iterateThroughDirectoryTree(paths[i], expressions, expressionCount, fileStat);
     }
     return 0;
 }
 
-void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount) {
-    struct stat fileStat;
-    if (stat(path, &fileStat) < 0) {
-        printf("find: '%s': No such file or directory\n", path); 
-        return;
-    }
+void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat) {
     if (S_ISDIR(fileStat.st_mode)) {
         DIR *dir = opendir(path);
         if (dir == NULL) {
@@ -69,7 +69,9 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
             if (path[strlen(path)-1] != '/')
                 strcat(newPath, "/");
             strcat(newPath, entry->d_name);
-            iterateThroughDirectoryTree(newPath, expressions, expressionCount);
+            struct stat newFileStat;
+            if (stat(newPath, &newFileStat) == 0) // if the file can be accessed
+                iterateThroughDirectoryTree(newPath, expressions, expressionCount, newFileStat);
             free(newPath);
         }
         closedir(dir);
