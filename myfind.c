@@ -9,6 +9,7 @@
 #include <pwd.h>
 #include <fnmatch.h>
 #include <ctype.h>
+#include <pthread.h>
 
 
 typedef enum ExpressionType {
@@ -36,26 +37,6 @@ int main(int argc, char *argv[]) {
     int pathCount = 0;
     char **paths = NULL;
     commandLineParsingAndValidation(argc, argv, &expressions, &expressionCount, &paths, &pathCount);
-    if (pathCount == 0) {
-        pathCount = 1;
-        paths = malloc(sizeof(char*));
-        char *currentWorkingDirectory = malloc(1024);
-        getcwd(currentWorkingDirectory, 1024);
-        paths[0] = currentWorkingDirectory;
-    } 
-    int printOrLsUsed = 0;
-    for (int i = 0; i < expressionCount; i++) {
-        if (expressions[i].type == PRINT || expressions[i].type == LS) {
-            printOrLsUsed = 1;
-            break;
-        }
-    }
-    if (!printOrLsUsed) {
-        expressionCount = expressionCount + 1;
-        expressions = realloc(expressions, sizeof(Expression) * expressionCount);
-        expressions[expressionCount-1].type = PRINT;
-        expressions[expressionCount-1].argument = NULL;
-    }
     for (int i = 0; i < pathCount; i++) {
         struct stat fileStat;
         if (stat(paths[i], &fileStat) < 0) { //if the provided path does not exist (or cannot be accessed)
@@ -64,15 +45,23 @@ int main(int argc, char *argv[]) {
         }
         iterateThroughDirectoryTree(paths[i], expressions, expressionCount, fileStat);
     }
+    free(expressions);
+    for (int i = 0; i < pathCount; i++) {
+        free(paths[i]);
+    }
+    free(paths);
     return 0;
 }
+
 
 void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpressions, int *pExpressionCount, char ***pPaths, int *pPathCount) {
     for (int i = 1; i < argc; i++) {
         if (argv[i][0] != '-') {
             if (*pExpressionCount == 0) {
-                *pPaths = realloc(*pPaths, sizeof(char*) * (*pPathCount)+1);
-                (*pPaths)[(*pPathCount)++] = argv[i];
+                *pPaths = realloc(*pPaths, sizeof(char*) * ((*pPathCount)+1));
+                char *path = malloc(sizeof(char) * (strlen(argv[i])+1));
+                strcpy(path, argv[i]);
+                (*pPaths)[(*pPathCount)++] = path;
             } else {
                 printf("find: path must preceed expression: `%s'\n", argv[i]);
                 exit(1);
@@ -84,13 +73,33 @@ void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpre
             printf("find: unknown predicate `%s'\n", argv[i]);
             exit(1);
         }
-        *pExpressions = realloc(*pExpressions, sizeof(Expression) * (*pExpressionCount)+1);
+        *pExpressions = realloc(*pExpressions, sizeof(Expression) * ((*pExpressionCount)+1));
         (*pExpressions)[*pExpressionCount].type = type;
         if (type == NAME || type == TYPE || type == USER) {
             (*pExpressions)[*pExpressionCount].argument = argv[++i];
         }
         (*pExpressionCount)++;
     } 
+    if (*pPathCount == 0) {
+        *pPathCount = 1;
+        *pPaths = malloc(sizeof(char*));
+        (*pPaths)[0] = malloc(sizeof(char) * 2);
+        (*pPaths)[0][0] = '.';
+        (*pPaths)[0][1] = '\0';
+    } 
+    int printOrLsUsed = 0;
+    for (int i = 0; i < (*pExpressionCount); i++) {
+        if ((*pExpressions)[i].type == PRINT || (*pExpressions)[i].type == LS) {
+            printOrLsUsed = 1;
+            break;
+        }
+    }
+    if (!printOrLsUsed) {
+        *pExpressionCount = (*pExpressionCount) + 1;
+        *pExpressions = realloc(*pExpressions, sizeof(Expression) * (*pExpressionCount));
+        (*pExpressions)[(*pExpressionCount)-1].type = PRINT;
+        (*pExpressions)[(*pExpressionCount)-1].argument = NULL;
+    }
 }
 
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat) {
@@ -136,12 +145,18 @@ void applyTestsAndActions(Expression *expressions, int expressionCount, char *pa
                 printf("%s\t", ctime(&fileStat.st_mtime));
                 printf("%s\n", path);
                 break;
-            case NAME:
-                if(fnmatch(expressions[i].argument, path, 0) == 0) {
-                    break;
-                } else {
-                    return;
+            case NAME: {        
+                    char *fileName = strrchr(path, '/');
+                    if (fileName == NULL) {
+                        fileName = path;
+                    } else {
+                        fileName++;
+                    }
+                    if (strcmp(expressions[i].argument, fileName) != 0) {
+                        return;
+                    }
                 }
+                break;
             case TYPE:
                 if (strcmp(expressions[i].argument, "f") == 0) {
                     if (S_ISREG(fileStat.st_mode)) {
