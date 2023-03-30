@@ -1,37 +1,19 @@
-#include <stdio.h>
+#include "myfind.h"
+#include "tests.h"
+#include <pthread.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <dirent.h>
-#include <sys/types.h>
+#include <fnmatch.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <time.h>
 #include <pwd.h>
-#include <fnmatch.h>
 #include <ctype.h>
-#include <pthread.h>
-
-
-typedef enum ExpressionType {
-    PRINT,
-    LS,
-    NAME,
-    TYPE,
-    USER,
-    invalid
-} ExpressionType;
-
-typedef struct Expression {
-    ExpressionType type;
-    char *argument;
-} Expression;
-
-ExpressionType getExpressionType(char *expression);
-void commandLineParsingAndValidation(int argc, char *argv[], Expression **expressions, int *expressionCount, char ***paths, int *pathCount);
-void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat);
-void applyTestsAndActions(Expression *expressions, int expressionCount, char *path, struct stat fileStat);
 
 int main(int argc, char *argv[]) {
+    callCommandLineParsingAndValidationTestCases();
     int expressionCount = 0;
     Expression *expressions = NULL;
     int pathCount = 0;
@@ -76,7 +58,14 @@ void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpre
         *pExpressions = realloc(*pExpressions, sizeof(Expression) * ((*pExpressionCount)+1));
         (*pExpressions)[*pExpressionCount].type = type;
         if (type == NAME || type == TYPE || type == USER) {
-            (*pExpressions)[*pExpressionCount].argument = argv[++i];
+            if (i+1 >= argc) {
+                printf("find: missing argument to `%s'\n", argv[i]);
+                exit(1);
+            }
+            (*pExpressions)[*pExpressionCount].argument = argv[i+1];
+            i++;
+        } else {
+            (*pExpressions)[*pExpressionCount].argument = "";
         }
         (*pExpressionCount)++;
     } 
@@ -98,7 +87,7 @@ void commandLineParsingAndValidation(int argc, char *argv[], Expression **pExpre
         *pExpressionCount = (*pExpressionCount) + 1;
         *pExpressions = realloc(*pExpressions, sizeof(Expression) * (*pExpressionCount));
         (*pExpressions)[(*pExpressionCount)-1].type = PRINT;
-        (*pExpressions)[(*pExpressionCount)-1].argument = NULL;
+        (*pExpressions)[(*pExpressionCount)-1].argument = "";
     }
 }
 
