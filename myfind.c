@@ -110,6 +110,7 @@ ProcessedArguments commandLineParsingAndValidation(int argc, char *argv[]) {
 }
 
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat) {
+    applyTestsAndActions(expressions, expressionCount, path, fileStat);
     if (S_ISDIR(fileStat.st_mode)) {
         DIR *dir = opendir(path);
         if (dir == NULL) {
@@ -132,7 +133,6 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
         }
         closedir(dir);
     } 
-    applyTestsAndActions(expressions, expressionCount, path, fileStat);
 }
 
 void applyTestsAndActions(Expression *expressions, int expressionCount, char *path, struct stat fileStat) {
