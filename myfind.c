@@ -1,5 +1,6 @@
 #include "myfind.h"
-#include "tests.h"
+#include "commandLineParsingAndValidationTests.h"
+#include "iterateThroughDirectoryTreeTests.h"
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
@@ -11,29 +12,30 @@
 #include <time.h>
 #include <pwd.h>
 #include <ctype.h>
-
+#include <sys/types.h>
+#include <grp.h>
 
 
 int main(int argc, char *argv[]) {
     callCommandLineParsingAndValidationTestCases();
-    ProcessedArguments processedArgs = commandLineParsingAndValidation(argc, argv);
-    for (int i = 0; i < processedArgs.pathCount; i++) {
-        struct stat fileStat;
-        if (stat(processedArgs.paths[i], &fileStat) < 0) { //if the provided path does not exist (or cannot be accessed)
-            printf("find: '%s': No such file or directory\n", processedArgs.paths[i]); 
-            continue;
-        }
-        iterateThroughDirectoryTree(processedArgs.paths[i], processedArgs.expressions, processedArgs.expressionCount, fileStat);
-    }
+    callIterateThroughDirectoryTreeTestCases();
+    // ProcessedArguments processedArgs = commandLineParsingAndValidation(argc, argv);
+    // for (int i = 0; i < processedArgs.pathCount; i++) {
+    //     struct stat fileStat;
+    //     if (lstat(processedArgs.paths[i], &fileStat) < 0) { //if the provided path does not exist (or cannot be accessed)
+    //         printf("find: '%s': No such file or directory\n", processedArgs.paths[i]); 
+    //         continue;
+    //     }
+    //     iterateThroughDirectoryTree(processedArgs.paths[i], processedArgs.expressions, processedArgs.expressionCount, fileStat);
+    // }
 
-    free(processedArgs.expressions);
-    for (int i = 0; i < processedArgs.pathCount; i++) {
-        free(processedArgs.paths[i]);
-    }
-    free(processedArgs.paths);
+    // free(processedArgs.expressions);
+    // for (int i = 0; i < processedArgs.pathCount; i++) {
+    //     free(processedArgs.paths[i]);
+    // }
+    // free(processedArgs.paths);
     return 0;
 }
-
 
 ProcessedArguments commandLineParsingAndValidation(int argc, char *argv[]) {
     ProcessedArguments processedArgs = {
@@ -114,6 +116,7 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
     if (S_ISDIR(fileStat.st_mode)) {
         DIR *dir = opendir(path);
         if (dir == NULL) {
+            fprintf(stderr, "find: '%s': Permission denied\n", path);
             return;
         }
         struct dirent *entry;
@@ -127,8 +130,9 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
                 strcat(newPath, "/");
             strcat(newPath, entry->d_name);
             struct stat newFileStat;
-            if (stat(newPath, &newFileStat) == 0) 
-                iterateThroughDirectoryTree(newPath, expressions, expressionCount, newFileStat);
+            if (lstat(newPath, &newFileStat) == 0) {
+               iterateThroughDirectoryTree(newPath, expressions, expressionCount, newFileStat);
+            }
             free(newPath);
         }
         closedir(dir);

@@ -15,12 +15,14 @@ typedef struct Expression {
     ExpressionType type;
     char *argument;
 } Expression;
+
 typedef struct ProcessedArguments {
     int expressionCount;
     Expression *expressions;
     int pathCount;
     char **paths;
 } ProcessedArguments;
+
 ExpressionType getExpressionType(char *expression);
 ProcessedArguments commandLineParsingAndValidation(int argc, char *argv[]);
 void iterateThroughDirectoryTree(char *path, Expression *expressions, int expressionCount, struct stat fileStat);

@@ -1,4 +1,4 @@
-#include "tests.h"
+#include "commandLineParsingAndValidationTests.h"
 #include "myfind.h"
 #include <pthread.h>
 #include <string.h>
@@ -11,7 +11,8 @@
 #include <time.h>
 #include <pwd.h>
 #include <ctype.h>
-
+#include <sys/types.h>
+#include <grp.h>
 
 void callCommandLineParsingAndValidationTestCases() {
     //test case 1: no arguments

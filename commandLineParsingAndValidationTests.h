@@ -1,5 +1,5 @@
-#ifndef TESTS_H
-#define TESTS_H
+#ifndef COMMANDLINEPARSINGANDVALIDATIONTESTS_H
+#define COMMANDLINEPARSINGANDVALIDATIONTESTS_H
 #include "myfind.h"
 struct commandLineParsingAndValidationTestArguments {
     int argc;
@@ -11,6 +11,6 @@ struct commandLineParsingAndValidationTestArguments {
     int testId;
 };
 void callCommandLineParsingAndValidationTestCases();
-void* testCommandLineParsingAndValidation(void *argsTest);
+void *testCommandLineParsingAndValidation(void *argsTest);
 void freeArgs(struct commandLineParsingAndValidationTestArguments *args);
 #endif
