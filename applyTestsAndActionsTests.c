@@ -16,11 +16,11 @@ void callApplyTestsAndActionsTests() {
 
     // test case 3 -name temp
     pthread_t thread3;
-    pthread_create(&thread3, NULL, testApplyTestsAndActions, &"/run -name temp");
+    pthread_create(&thread3, NULL, testApplyTestsAndActions, &"~/myfind-bsys- -name main.c");
 
     // test case 4 -user root
     pthread_t thread4;
-    pthread_create(&thread4, NULL, testApplyTestsAndActions, &"/run -user root");
+    pthread_create(&thread4, NULL, testApplyTestsAndActions, &"~/myfind-bsys- -user fabian");
 
     // test case 5 -type b
     pthread_t thread5;
