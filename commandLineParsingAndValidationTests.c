@@ -30,8 +30,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args1->expectedPathCount = 1;
     args1->testId = 1;
     pthread_create(&thread1, NULL, testCommandLineParsingAndValidation, args1);
-    pthread_join(thread1, NULL);    
-    freeArgs(args1);
 
     //test case 2: -name
     pthread_t thread2;
@@ -52,8 +50,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args2->expectedPathCount = 1;
     args2->testId = 2;
     pthread_create(&thread2, NULL, testCommandLineParsingAndValidation, args2);
-    pthread_join(thread2, NULL);
-    freeArgs(args2);
 
     //test case 3: -type
     pthread_t thread3;
@@ -74,8 +70,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args3->expectedPathCount = 1;
     args3->testId = 3;
     pthread_create(&thread3, NULL, testCommandLineParsingAndValidation, args3);
-    pthread_join(thread3, NULL);
-    freeArgs(args3);
 
     //test case 4: -user
     pthread_t thread4;
@@ -96,8 +90,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args4->expectedPathCount = 1;
     args4->testId = 4;
     pthread_create(&thread4, NULL, testCommandLineParsingAndValidation, args4);
-    pthread_join(thread4, NULL);
-    freeArgs(args4);
 
     //test case 5: -print
     pthread_t thread5;
@@ -115,8 +107,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args5->expectedPathCount = 1;
     args5->testId = 5;
     pthread_create(&thread5, NULL, testCommandLineParsingAndValidation, args5);
-    pthread_join(thread5, NULL);
-    freeArgs(args5);
 
     //test case 6: -ls
     pthread_t thread6;
@@ -134,8 +124,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args6->expectedPathCount = 1;
     args6->testId = 6;
     pthread_create(&thread6, NULL, testCommandLineParsingAndValidation, args6);
-    pthread_join(thread6, NULL);
-    freeArgs(args6);
 
     //test case 7: one path no expressions
     pthread_t thread7;
@@ -153,49 +141,43 @@ void callCommandLineParsingAndValidationTestCases() {
     args7->expectedPathCount = 1;
     args7->testId = 7;
     pthread_create(&thread7, NULL, testCommandLineParsingAndValidation, args7);
-    pthread_join(thread7, NULL);
-    freeArgs(args7);
 
     //test case 8: one path one expression (ls)
     pthread_t thread8;
-    struct commandLineParsingAndValidationTestArguments *args9 = malloc(sizeof(struct commandLineParsingAndValidationTestArguments));
-    args9->argc = 3;
-    args9->argv = malloc(sizeof(char*) * 3);
-    args9->argv[0] = "myfind";
-    args9->argv[1] = "/home";
-    args9->argv[2] = "-ls";
-    args9->pExpectedExpressions = malloc(sizeof(Expression));
-    args9->pExpectedExpressions[0].type = LS;
-    args9->pExpectedExpressions[0].argument = "";
-    args9->expectedExpressionCount = 1;
-    args9->pExpectedPaths = malloc(sizeof(char*));
-    args9->pExpectedPaths[0] = "/home";
-    args9->expectedPathCount = 1;
-    args9->testId = 8;
-    pthread_create(&thread8, NULL, testCommandLineParsingAndValidation, args9);
-    pthread_join(thread8, NULL);
-    freeArgs(args9);
-    
-    //test case 9: two paths no expressions
-    pthread_t thread9;
     struct commandLineParsingAndValidationTestArguments *args8 = malloc(sizeof(struct commandLineParsingAndValidationTestArguments));
     args8->argc = 3;
     args8->argv = malloc(sizeof(char*) * 3);
     args8->argv[0] = "myfind";
     args8->argv[1] = "/home";
-    args8->argv[2] = "/etc";
+    args8->argv[2] = "-ls";
     args8->pExpectedExpressions = malloc(sizeof(Expression));
-    args8->pExpectedExpressions[0].type = PRINT;
+    args8->pExpectedExpressions[0].type = LS;
     args8->pExpectedExpressions[0].argument = "";
     args8->expectedExpressionCount = 1;
-    args8->pExpectedPaths = malloc(sizeof(char*) * 2);
+    args8->pExpectedPaths = malloc(sizeof(char*));
     args8->pExpectedPaths[0] = "/home";
-    args8->pExpectedPaths[1] = "/etc";
-    args8->expectedPathCount = 2;
-    args8->testId = 9;
-    pthread_create(&thread9, NULL, testCommandLineParsingAndValidation, args8);
-    pthread_join(thread9, NULL);
-    freeArgs(args8);
+    args8->expectedPathCount = 1;
+    args8->testId = 8;
+    pthread_create(&thread8, NULL, testCommandLineParsingAndValidation, args8);
+    
+    //test case 9: two paths no expressions
+    pthread_t thread9;
+    struct commandLineParsingAndValidationTestArguments *args9 = malloc(sizeof(struct commandLineParsingAndValidationTestArguments));
+    args9->argc = 3;
+    args9->argv = malloc(sizeof(char*) * 3);
+    args9->argv[0] = "myfind";
+    args9->argv[1] = "/home";
+    args9->argv[2] = "/etc";
+    args9->pExpectedExpressions = malloc(sizeof(Expression));
+    args9->pExpectedExpressions[0].type = PRINT;
+    args9->pExpectedExpressions[0].argument = "";
+    args9->expectedExpressionCount = 1;
+    args9->pExpectedPaths = malloc(sizeof(char*) * 2);
+    args9->pExpectedPaths[0] = "/home";
+    args9->pExpectedPaths[1] = "/etc";
+    args9->expectedPathCount = 2;
+    args9->testId = 9;
+    pthread_create(&thread9, NULL, testCommandLineParsingAndValidation, args9);
 
     //test case 10: two paths one expression (ls)
     pthread_t thread10;
@@ -216,8 +198,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args10->expectedPathCount = 2;
     args10->testId = 10;
     pthread_create(&thread10, NULL, testCommandLineParsingAndValidation, args10);
-    pthread_join(thread10, NULL);
-    freeArgs(args10);
 
     //test case 11: two paths two expressions (ls and print)
     pthread_t thread11;
@@ -241,8 +221,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args11->expectedPathCount = 2;
     args11->testId = 11;
     pthread_create(&thread11, NULL, testCommandLineParsingAndValidation, args11);
-    pthread_join(thread11, NULL);
-    freeArgs(args11);
 
     //test case 12: two paths three expressions (ls, print, name)    
     pthread_t thread12;
@@ -270,8 +248,6 @@ void callCommandLineParsingAndValidationTestCases() {
     args12->expectedPathCount = 2;
     args12->testId = 12;
     pthread_create(&thread12, NULL, testCommandLineParsingAndValidation, args12);
-    pthread_join(thread12, NULL);
-    freeArgs(args12);
 
     //test case 13: two paths three expressions (ls, user, print)
     pthread_t thread13;
@@ -299,7 +275,32 @@ void callCommandLineParsingAndValidationTestCases() {
     args13->expectedPathCount = 2;
     args13->testId = 13;
     pthread_create(&thread13, NULL, testCommandLineParsingAndValidation, args13);
+    
+    pthread_join(thread1, NULL);    
+    pthread_join(thread2, NULL);
+    pthread_join(thread3, NULL);
+    pthread_join(thread4, NULL);
+    pthread_join(thread5, NULL);
+    pthread_join(thread6, NULL);
+    pthread_join(thread7, NULL);
+    pthread_join(thread8, NULL);
+    pthread_join(thread9, NULL);
+    pthread_join(thread10, NULL);
+    pthread_join(thread11, NULL);
+    pthread_join(thread12, NULL);
     pthread_join(thread13, NULL);
+    freeArgs(args1);
+    freeArgs(args2);
+    freeArgs(args3);
+    freeArgs(args4);
+    freeArgs(args5);
+    freeArgs(args6);
+    freeArgs(args7);
+    freeArgs(args8);
+    freeArgs(args9);
+    freeArgs(args10);
+    freeArgs(args11);
+    freeArgs(args12);    
     freeArgs(args13);
 }
 
