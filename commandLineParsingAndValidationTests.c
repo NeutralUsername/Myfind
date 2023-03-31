@@ -1,18 +1,9 @@
 #include "commandLineParsingAndValidationTests.h"
 #include "myfind.h"
+#include <stdio.h>
 #include <pthread.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <fnmatch.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <time.h>
-#include <pwd.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <grp.h>
 
 void callCommandLineParsingAndValidationTestCases() {
     //test case 1: no arguments

@@ -1,70 +1,62 @@
-
 #include "applyTestsAndActionsTests.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <time.h>
-#include <pwd.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <grp.h>
 #include <pthread.h>
+#include <string.h>
+#include <stdlib.h>
+
 
 void callApplyTestsAndActionsTests() { 
     // test case 1 -print
     pthread_t thread1;  
-    pthread_create(&thread1, NULL, testApplyTestsAndActions, &"~ -print");
+    pthread_create(&thread1, NULL, testApplyTestsAndActions, &"/run -print");
 
     // test case 2 -ls
     pthread_t thread2;
-    pthread_create(&thread2, NULL, testApplyTestsAndActions, &"~ -ls");
+    pthread_create(&thread2, NULL, testApplyTestsAndActions, &"/run -ls");
 
     // test case 3 -name temp
     pthread_t thread3;
-    pthread_create(&thread3, NULL, testApplyTestsAndActions, &"~ -name temp");
+    pthread_create(&thread3, NULL, testApplyTestsAndActions, &"/run -name temp");
 
     // test case 4 -user root
     pthread_t thread4;
-    pthread_create(&thread4, NULL, testApplyTestsAndActions, &"~ -user root");
+    pthread_create(&thread4, NULL, testApplyTestsAndActions, &"/run -user root");
 
     // test case 5 -type b
     pthread_t thread5;
-    pthread_create(&thread5, NULL, testApplyTestsAndActions, &"~ -type b");
+    pthread_create(&thread5, NULL, testApplyTestsAndActions, &"/run -type b");
 
     // test case 6 -type c
     pthread_t thread6;
-    pthread_create(&thread6, NULL, testApplyTestsAndActions, &"~ -type c");
+    pthread_create(&thread6, NULL, testApplyTestsAndActions, &"/run -type c");
 
     // test case 7 -type d
     pthread_t thread7;
-    pthread_create(&thread7, NULL, testApplyTestsAndActions, &"~ -type d");
+    pthread_create(&thread7, NULL, testApplyTestsAndActions, &"/run -type d");
 
     // test case 8 -type p
     pthread_t thread8;
-    pthread_create(&thread8, NULL, testApplyTestsAndActions, &"~ -type p");
+    pthread_create(&thread8, NULL, testApplyTestsAndActions, &"/run -type p");
 
     // test case 9 -type f
     pthread_t thread9;
-    pthread_create(&thread9, NULL, testApplyTestsAndActions, &"~ -type f");
+    pthread_create(&thread9, NULL, testApplyTestsAndActions, &"/run -type f");
 
     // test case 10 -type l
     pthread_t thread10;
-    pthread_create(&thread10, NULL, testApplyTestsAndActions, &"~ -type l");
+    pthread_create(&thread10, NULL, testApplyTestsAndActions, &"/run -type l");
 
     // test case 11 -type s
     pthread_t thread11;
-    pthread_create(&thread11, NULL, testApplyTestsAndActions, &"~ -type s");
+    pthread_create(&thread11, NULL, testApplyTestsAndActions, &"/run -type s");
 
     // test case 12 -type f -name temp
     pthread_t thread12;
-    pthread_create(&thread12, NULL, testApplyTestsAndActions, &"~ -type f -name temp");
+    pthread_create(&thread12, NULL, testApplyTestsAndActions, &"/run -type f -name temp");
 
     // test case 13 path print -type f -ls
     pthread_t thread13;
-    pthread_create(&thread13, NULL, testApplyTestsAndActions, &"~ -print -type f -ls");
+    pthread_create(&thread13, NULL, testApplyTestsAndActions, &"/run -print -type f -ls");
     
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
@@ -78,6 +70,7 @@ void callApplyTestsAndActionsTests() {
     pthread_join(thread10, NULL);
     pthread_join(thread11, NULL);
     pthread_join(thread12, NULL);
+    pthread_join(thread13, NULL);
 }
 
 void *testApplyTestsAndActions(void *voidPath) {

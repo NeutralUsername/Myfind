@@ -1,17 +1,9 @@
 
 #include "iterateThroughDirectoryTreeTests.h"
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <time.h>
-#include <pwd.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <grp.h>
 #include <pthread.h>
+#include <string.h>
+#include <stdlib.h>
 
 void callIterateThroughDirectoryTreeTestCases() { 
     pthread_t thread1;  

@@ -1,6 +1,4 @@
 #include "myfind.h"
-#include <pthread.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 
