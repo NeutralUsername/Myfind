@@ -1,6 +1,4 @@
 #include "myfind.h"
-#include "commandLineParsingAndValidationTests.h"
-#include "iterateThroughDirectoryTreeTests.h"
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
@@ -14,28 +12,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <grp.h>
-
-
-int main(int argc, char *argv[]) {
-    callCommandLineParsingAndValidationTestCases();
-    callIterateThroughDirectoryTreeTestCases();
-    // ProcessedArguments processedArgs = commandLineParsingAndValidation(argc, argv);
-    // for (int i = 0; i < processedArgs.pathCount; i++) {
-    //     struct stat fileStat;
-    //     if (lstat(processedArgs.paths[i], &fileStat) < 0) { //if the provided path does not exist (or cannot be accessed)
-    //         printf("find: '%s': No such file or directory\n", processedArgs.paths[i]); 
-    //         continue;
-    //     }
-    //     iterateThroughDirectoryTree(processedArgs.paths[i], processedArgs.expressions, processedArgs.expressionCount, fileStat);
-    // }
-
-    // free(processedArgs.expressions);
-    // for (int i = 0; i < processedArgs.pathCount; i++) {
-    //     free(processedArgs.paths[i]);
-    // }
-    // free(processedArgs.paths);
-    return 0;
-}
 
 ProcessedArguments commandLineParsingAndValidation(int argc, char *argv[]) {
     ProcessedArguments processedArgs = {
@@ -139,22 +115,32 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
     } 
 }
 
+char *timeToString(time_t time) {
+    char *timeString = malloc(sizeof(char) * 100);
+    struct tm *timeStruct = localtime(&time);
+    strftime(timeString, 100, "%b %d %H:%M", timeStruct);
+    return timeString;
+}
+
 void applyTestsAndActions(Expression *expressions, int expressionCount, char *path, struct stat fileStat) {
     for (int i = 0; i < expressionCount; i++) {
         switch (expressions[i].type) {
             case PRINT:
                 printf("%s\n", path);
                 break;
-            case LS:
-                printf("%ld\t", fileStat.st_ino);
+            case LS: {
+                char *timeString = timeToString(fileStat.st_mtime);
+                printf("%8ld ", fileStat.st_ino);
                 printf("%ld\t", fileStat.st_blocks);
                 printf("%o\t", fileStat.st_mode);
                 printf("%ld\t", fileStat.st_nlink);
                 printf("%d\t", fileStat.st_uid);
                 printf("%d\t", fileStat.st_gid);
                 printf("%ld\t", fileStat.st_size);
-                printf("%s\t", ctime(&fileStat.st_mtime));
+                printf("%s\t", timeString);
                 printf("%s\n", path);
+                free(timeString);
+                }
                 break;
             case NAME: {        
                     char *fileName = strrchr(path, '/');

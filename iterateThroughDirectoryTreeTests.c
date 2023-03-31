@@ -37,26 +37,49 @@ void *testIterateThroughDirectoryTree(void *voidPath) {
     strcat(myfindString, path);
     FILE *findStandardOut = popen(findString, "r");
     FILE *myfindStandardOut = popen(myfindString, "r");
-    char findStandardOutString[1000000] = "";
-    char myfindStandardOutString[1000000] = "";
+    char *findStandardOutString = malloc(1);
+    char *myfindStandardOutString = malloc(1);
+    findStandardOutString[0] = '\0';
+    myfindStandardOutString[0] = '\0';
     char temp = '\0';
+    int i = 0;
+    int linesMyfind = 0;
+    int linesFind = 0;
     while((temp = fgetc(findStandardOut)) != EOF) {
-        strncat(findStandardOutString, &temp, 1);
-    }
-    while((temp = fgetc(myfindStandardOut)) != EOF) {
-        strncat(myfindStandardOutString, &temp, 1);
-    }
-    for (size_t i = 0; i < strlen(findStandardOutString); i++) {
-        if (findStandardOutString[i] == myfindStandardOutString[i]) {
-            //printf("%c", findStandardOutString[i]);
-        } else {
-            printf("error at index %ld\n", i);
-            return NULL;
+        findStandardOutString[i] = temp;
+        if (temp == '\n') {
+            linesFind++;
         }
+        i++;
+        findStandardOutString = realloc(findStandardOutString, i+1);
+        findStandardOutString[i] = '\0';
+    }
+    i = 0;
+    while((temp = fgetc(myfindStandardOut)) != EOF) {
+        myfindStandardOutString[i] = temp;
+        if (temp == '\n') {
+            linesMyfind++;
+        }
+        i++;
+        myfindStandardOutString = realloc(myfindStandardOutString, i+1);
+        myfindStandardOutString[i] = '\0';
+    }
+    if(linesMyfind != linesFind) {
+        printf("iterateThroughDirectoryTree test case %s failed\n", path);
+        printf("myfind found %d lines, find found %d lines\n", linesMyfind, linesFind);
+        printf("myfind output:\n%s\n", myfindStandardOutString);
+        printf("find output:\n%s\n", findStandardOutString);
+        pclose(findStandardOut);
+        pclose(myfindStandardOut);
+        free(findStandardOutString);
+        free(myfindStandardOutString);
+        return NULL;
     }
 
     pclose(findStandardOut);
     pclose(myfindStandardOut);
+    free(findStandardOutString);
+    free(myfindStandardOutString);
     printf("iterateThroughDirectoryTree test case %s passed\n", path);
     return NULL;
 }

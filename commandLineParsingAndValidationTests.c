@@ -329,36 +329,71 @@ void* testCommandLineParsingAndValidation(void *voidArgs) {
     ProcessedArguments processedArgs = commandLineParsingAndValidation(properlyTypedArgs->argc, properlyTypedArgs->argv);
     if (processedArgs.expressionCount != properlyTypedArgs->expectedExpressionCount) {
         printf("testCommandLineParsingAndValidation: expressionCount is %d, expected %d ... in test %d\n", processedArgs.expressionCount, properlyTypedArgs->expectedExpressionCount, properlyTypedArgs->testId);
-        exit(1);
+        free(processedArgs.expressions);
+        for (int i = 0; i < processedArgs.pathCount; i++) {
+            free(processedArgs.paths[i]);
+        }
+        free(processedArgs.paths);
+        return NULL;
     }
     for (int i = 0; i < processedArgs.expressionCount; i++) {
         if (processedArgs.expressions[i].type != properlyTypedArgs->expectedExpressions[i].type) {
             printf("testCommandLineParsingAndValidation: expression type is %d, expected %d ... in test %d\n", processedArgs.expressions[i].type, properlyTypedArgs->expectedExpressions[i].type, properlyTypedArgs->testId);
-            exit(1);
+            free(processedArgs.expressions);
+            for (int i = 0; i < processedArgs.pathCount; i++) {
+                free(processedArgs.paths[i]);
+            }
+            free(processedArgs.paths);
+            return NULL;
         }
         if (processedArgs.expressions[i].argument != NULL && properlyTypedArgs->expectedExpressions[i].argument != NULL) {
             if (strcmp(processedArgs.expressions[i].argument, properlyTypedArgs->expectedExpressions[i].argument) != 0) {
                 printf("testCommandLineParsingAndValidation: expression argument is %s, expected %s ... in test %d\n", processedArgs.expressions[i].argument, properlyTypedArgs->expectedExpressions[i].argument, properlyTypedArgs->testId);
-                exit(1);
+                free(processedArgs.expressions);
+                for (int i = 0; i < processedArgs.pathCount; i++) {
+                    free(processedArgs.paths[i]);
+                }
+                free(processedArgs.paths);
+                return NULL;
             }
         }
         if (processedArgs.expressions[i].argument == NULL && properlyTypedArgs->expectedExpressions[i].argument != NULL) {
             printf("testCommandLineParsingAndValidation: expression argument is NULL, expected %s ... in test %d\n", properlyTypedArgs->expectedExpressions[i].argument, properlyTypedArgs->testId);
-            exit(1);
+            free(processedArgs.expressions);
+            for (int i = 0; i < processedArgs.pathCount; i++) {
+                free(processedArgs.paths[i]);
+            }
+            free(processedArgs.paths);
+            return NULL;
         }
         if (processedArgs.expressions[i].argument != NULL && properlyTypedArgs->expectedExpressions[i].argument == NULL) {
             printf("testCommandLineParsingAndValidation: expression argument is %s, expected NULL ... in test %d\n", processedArgs.expressions[i].argument, properlyTypedArgs->testId);
-            exit(1);
+            free(processedArgs.expressions);
+            for (int i = 0; i < processedArgs.pathCount; i++) {
+                free(processedArgs.paths[i]);
+            }
+            free(processedArgs.paths);
+            return NULL;
         } 
     }
     if (processedArgs.pathCount != properlyTypedArgs->expectedPathCount) {
         printf("testCommandLineParsingAndValidation: pathCount is %d, expected %d ... in test %d\n", processedArgs.pathCount, properlyTypedArgs->expectedPathCount, properlyTypedArgs->testId);
-        exit(1);
+        free(processedArgs.expressions);
+        for (int i = 0; i < processedArgs.pathCount; i++) {
+            free(processedArgs.paths[i]);
+        }
+        free(processedArgs.paths);
+        return NULL;
     }
     for (int i = 0; i < processedArgs.pathCount; i++) {
         if (strcmp(processedArgs.paths[i], properlyTypedArgs->expectedPaths[i]) != 0) {
             printf("testCommandLineParsingAndValidation: path is %s, expected %s ... in test %d\n", processedArgs.paths[i], properlyTypedArgs->expectedPaths[i], properlyTypedArgs->testId);
-            exit(1);
+            free(processedArgs.expressions);
+            for (int i = 0; i < processedArgs.pathCount; i++) {
+                free(processedArgs.paths[i]);
+            }
+            free(processedArgs.paths);
+            return NULL;
         }
     }
     printf("testCommandLineParsingAndValidation: test %d passed\n", properlyTypedArgs->testId);
