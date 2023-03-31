@@ -46,11 +46,11 @@ void *testIterateThroughDirectoryTree(void *voidPath) {
     while((temp = fgetc(myfindStandardOut)) != EOF) {
         strncat(myfindStandardOutString, &temp, 1);
     }
-    for (int i = 0; i < strlen(findStandardOutString); i++) {
+    for (size_t i = 0; i < strlen(findStandardOutString); i++) {
         if (findStandardOutString[i] == myfindStandardOutString[i]) {
-            printf("%c", findStandardOutString[i]);
+            //printf("%c", findStandardOutString[i]);
         } else {
-            printf("error at index %d\n", i);
+            printf("error at index %ld\n", i);
             return NULL;
         }
     }
@@ -58,4 +58,5 @@ void *testIterateThroughDirectoryTree(void *voidPath) {
     pclose(findStandardOut);
     pclose(myfindStandardOut);
     printf("iterateThroughDirectoryTree test case %s passed\n", path);
+    return NULL;
 }

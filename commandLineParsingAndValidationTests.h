@@ -3,14 +3,13 @@
 #include "myfind.h"
 struct commandLineParsingAndValidationTestArguments {
     int argc;
-    char **argv;
-    Expression *pExpectedExpressions;
+    char *argv[1000];
+    Expression  expectedExpressions[123];
     int expectedExpressionCount;
-    char **pExpectedPaths;
+    char expectedPaths[123][1000];
     int expectedPathCount;
     int testId;
 };
 void callCommandLineParsingAndValidationTestCases();
 void *testCommandLineParsingAndValidation(void *argsTest);
-void freeArgs(struct commandLineParsingAndValidationTestArguments *args);
 #endif
