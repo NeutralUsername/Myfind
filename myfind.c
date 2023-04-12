@@ -7,6 +7,7 @@
 #include <pwd.h>
 #include <time.h>
 #include <ctype.h>
+#include <fnmatch.h>
 
 ProcessedArguments commandLineParsingAndValidation(int argc, char *argv[]) {
     ProcessedArguments processedArgs = {
@@ -124,17 +125,27 @@ void applyTestsAndActions(Expression *expressions, int expressionCount, char *pa
                 printf("%s\n", path);
                 break;
             case LS: {
-                char *timeString = timeToString(fileStat.st_mtime);
-                printf("%8ld ", fileStat.st_ino);
-                printf("%ld\t", fileStat.st_blocks);
-                printf("%o\t", fileStat.st_mode);
-                printf("%ld\t", fileStat.st_nlink);
-                printf("%d\t", fileStat.st_uid);
-                printf("%d\t", fileStat.st_gid);
-                printf("%ld\t", fileStat.st_size);
-                printf("%s\t", timeString);
-                printf("%s\n", path);
-                free(timeString);
+                    char *timeString = timeToString(fileStat.st_mtime);
+                    char *permissions = modeToString(fileStat.st_mode);
+                    struct passwd *user = getpwuid(fileStat.st_uid);
+                    struct passwd *group = getpwuid(fileStat.st_gid);
+                    if (user == NULL || group == NULL) {
+                        return;
+                    }
+                    char *userName = user->pw_name;
+                    char *groupName = group->pw_name;
+                    printf("%8ld ", fileStat.st_ino);
+                    printf("%ld\t", fileStat.st_blocks/2);
+                    printf("%s\t", permissions);
+                    printf("%ld\t", fileStat.st_nlink);
+                    printf("%s\t", userName);
+                    printf("%s\t", groupName);
+                    printf("%ld\t", fileStat.st_size);
+                    printf("%s\t", timeString);
+                    printf("%s\n", path);
+                    free(timeString);
+                    free(permissions);
+                    
                 }
                 break;
             case NAME: {        
@@ -144,7 +155,7 @@ void applyTestsAndActions(Expression *expressions, int expressionCount, char *pa
                     } else {
                         fileName++;
                     }
-                    if (strcmp(expressions[i].argument, fileName) != 0) {
+                    if (fnmatch(expressions[i].argument, fileName, 0) != 0) {
                         return;
                     }
                 }
@@ -181,16 +192,16 @@ void applyTestsAndActions(Expression *expressions, int expressionCount, char *pa
                 }
                 break;
             case USER: {
-                char *userNameOrId = expressions[i].argument;
-                struct passwd *user = getpwnam(userNameOrId);
-                if (user == NULL && isdigit(userNameOrId[0])) {
-                    user = getpwuid(atoi(userNameOrId));
+                    char *userNameOrId = expressions[i].argument;
+                    struct passwd *user = getpwnam(userNameOrId);
+                    if (user == NULL && isdigit(userNameOrId[0])) {
+                        user = getpwuid(atoi(userNameOrId));
+                    }
+                    if (user->pw_uid != fileStat.st_uid) {
+                        return;
+                    }
                 }
-                if (user->pw_uid != fileStat.st_uid) {
-                    return;
-                }
-            }
-            break;
+                break;
             case invalid:
                 break;
         }
@@ -235,4 +246,20 @@ ExpressionType getExpressionType(char *expression) {
     if (strcmp(expression, "-user") == 0)
         return USER;
     return invalid;
+}
+
+char *modeToString(mode_t mode) {
+    char *modeString = malloc(sizeof(char) * 11);
+    modeString[0] = (S_ISDIR(mode)) ? 'd' : '-';
+    modeString[1] = (mode & S_IRUSR) ? 'r' : '-';
+    modeString[2] = (mode & S_IWUSR) ? 'w' : '-';
+    modeString[3] = (mode & S_IXUSR) ? 'x' : '-';
+    modeString[4] = (mode & S_IRGRP) ? 'r' : '-';
+    modeString[5] = (mode & S_IWGRP) ? 'w' : '-';
+    modeString[6] = (mode & S_IXGRP) ? 'x' : '-';
+    modeString[7] = (mode & S_IROTH) ? 'r' : '-';
+    modeString[8] = (mode & S_IWOTH) ? 'w' : '-';
+    modeString[9] = (mode & S_IXOTH) ? 'x' : '-';
+    modeString[10] = '\0';
+    return modeString;
 }

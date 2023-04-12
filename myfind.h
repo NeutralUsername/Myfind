@@ -29,4 +29,5 @@ void iterateThroughDirectoryTree(char *path, Expression *expressions, int expres
 void applyTestsAndActions(Expression *expressions, int expressionCount, char *path, struct stat fileStat);
 int isValidType(char *type);
 int isValidUser(char *user);
+char *modeToString(mode_t mode);
 #endif

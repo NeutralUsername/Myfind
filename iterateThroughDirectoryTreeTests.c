@@ -13,7 +13,7 @@ void callIterateThroughDirectoryTreeTestCases() {
     pthread_t thread3;
     pthread_create(&thread3, NULL, testIterateThroughDirectoryTree, &"/var/cache/private");
     pthread_t thread4;
-    pthread_create(&thread4, NULL, testIterateThroughDirectoryTree, &". ~/Downloads ~/myfind-bsys- /var/cache/private");
+    pthread_create(&thread4, NULL, testIterateThroughDirectoryTree, &". ~/Downloads ~/programming/myfind-bsys- /var/cache/private");
     
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
